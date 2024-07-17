@@ -183,7 +183,7 @@ static unsigned char cherryFontData[CHERRY_STYLE_FONT_ATLAS_COMP_SIZE] = { 0xed,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xe0, 0x79, 0xff, 0xf9, 0xe7, 0x3c, 0x80, 0xf8, 0x07, 0xfe, 0xba, 0xf8, 0xff, 0x17 };
 
 // Font glyphs rectangles data (on atlas)
-static const Rectangle cherryFontRecs[189] = {
+static const RayRectangle cherryFontRecs[189] = {
     { 4, 4, 5 , 15 },
     { 17, 4, 3 , 10 },
     { 28, 4, 5 , 2 },
@@ -595,8 +595,8 @@ static void GuiLoadStyleCherry(void)
 
     // Copy char recs data from global fontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(Rectangle));
-    memcpy(font.recs, cherryFontRecs, font.glyphCount*sizeof(Rectangle));
+    font.recs = (RayRectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(RayRectangle));
+    memcpy(font.recs, cherryFontRecs, font.glyphCount*sizeof(RayRectangle));
 
     // Copy font char info data from global fontChars
     // NOTE: Required to avoid issues if trying to free font
@@ -607,7 +607,7 @@ static void GuiLoadStyleCherry(void)
 
     // Setup a white rectangle on the font to be used on shapes drawing,
     // it makes possible to draw shapes and text (full UI) in a single draw call
-    Rectangle fontWhiteRec = { 510, 254, 1, 1 };
+    RayRectangle fontWhiteRec = { 510, 254, 1, 1 };
     SetShapesTexture(font.texture, fontWhiteRec);
 
     //-----------------------------------------------------------------

@@ -363,7 +363,7 @@ static unsigned char amberFontData[AMBER_STYLE_FONT_ATLAS_COMP_SIZE] = { 0xed,
     0xa2, 0x28, 0x8a, 0xe2, 0xe0, 0xff, 0xa7, 0xf9, 0xa0, 0xfa, 0x2b, 0xff, 0xb3, 0xfa, 0xff, 0x3f };
 
 // Font glyphs rectangles data (on atlas)
-static const Rectangle amberFontRecs[95] = {
+static const RayRectangle amberFontRecs[95] = {
     { 4, 4, 3 , 16 },
     { 15, 4, 2 , 11 },
     { 25, 4, 4 , 5 },
@@ -587,8 +587,8 @@ static void GuiLoadStyleAmber(void)
 
     // Copy char recs data from global fontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(Rectangle));
-    memcpy(font.recs, amberFontRecs, font.glyphCount*sizeof(Rectangle));
+    font.recs = (RayRectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(RayRectangle));
+    memcpy(font.recs, amberFontRecs, font.glyphCount*sizeof(RayRectangle));
 
     // Copy font char info data from global fontChars
     // NOTE: Required to avoid issues if trying to free font
@@ -599,7 +599,7 @@ static void GuiLoadStyleAmber(void)
 
     // Setup a white rectangle on the font to be used on shapes drawing,
     // it makes possible to draw shapes and text (full UI) in a single draw call
-    Rectangle fontWhiteRec = { 254, 126, 1, 1 };
+    RayRectangle fontWhiteRec = { 254, 126, 1, 1 };
     SetShapesTexture(font.texture, fontWhiteRec);
 
     //-----------------------------------------------------------------

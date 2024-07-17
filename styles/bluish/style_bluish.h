@@ -185,7 +185,7 @@ static unsigned char bluishFontData[BLUISH_STYLE_FONT_ATLAS_COMP_SIZE] = { 0xed,
     0x00, 0xe6, 0xb9, 0xfd, 0x61, 0x1e, 0x88, 0x3f, 0xbc, 0xda, 0xf8, 0xff, 0x17 };
 
 // Font glyphs rectangles data (on atlas)
-static const Rectangle bluishFontRecs[189] = {
+static const RayRectangle bluishFontRecs[189] = {
     { 4, 4, 5 , 10 },
     { 17, 4, 2 , 8 },
     { 27, 4, 4 , 3 },
@@ -597,8 +597,8 @@ static void GuiLoadStyleBluish(void)
 
     // Copy char recs data from global fontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(Rectangle));
-    memcpy(font.recs, bluishFontRecs, font.glyphCount*sizeof(Rectangle));
+    font.recs = (RayRectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(RayRectangle));
+    memcpy(font.recs, bluishFontRecs, font.glyphCount*sizeof(RayRectangle));
 
     // Copy font char info data from global fontChars
     // NOTE: Required to avoid issues if trying to free font
@@ -609,7 +609,7 @@ static void GuiLoadStyleBluish(void)
 
     // Setup a white rectangle on the font to be used on shapes drawing,
     // it makes possible to draw shapes and text (full UI) in a single draw call
-    Rectangle fontWhiteRec = { 254, 254, 1, 1 };
+    RayRectangle fontWhiteRec = { 254, 254, 1, 1 };
     SetShapesTexture(font.texture, fontWhiteRec);
 
     //-----------------------------------------------------------------
