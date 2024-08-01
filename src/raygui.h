@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raygui v4.1-dev - A simple and easy-to-use immediate-mode gui library
+*   raygui v4.5-dev - A simple and easy-to-use immediate-mode gui library
 *
 *   DESCRIPTION:
 *       raygui is a tools-dev-focused immediate-mode-gui library based on raylib but also
@@ -141,8 +141,23 @@
 *           Draw text bounds rectangles for debug
 *
 *   VERSIONS HISTORY:
-*       4.1-dev (2024)    Current dev version...
+*       4.5-dev (Sep-2024)    Current dev version...
 *                         ADDED: guiControlExclusiveMode and guiControlExclusiveRec for exclusive modes
+*                         ADDED: GuiValueBoxFloat()
+*                         ADDED: GuiDropdonwBox() properties: DROPDOWN_ARROW_HIDDEN, DROPDOWN_ROLL_UP
+*                         ADDED: GuiListView() property: LIST_ITEMS_BORDER_WIDTH
+*                         ADDED: Multiple new icons
+*                         REVIEWED: GuiTabBar(), close tab with mouse middle button
+*                         REVIEWED: GuiScrollPanel(), scroll speed proportional to content
+*                         REVIEWED: GuiDropdownBox(), support roll up and hidden arrow
+*                         REVIEWED: GuiTextBox(), cursor position initialization
+*                         REVIEWED: GuiSliderPro(), control value change check
+*                         REVIEWED: GuiGrid(), simplified implementation
+*                         REVIEWED: GuiIconText(), increase buffer size and reviewed padding
+*                         REVIEWED: GuiDrawText(), improved wrap mode drawing
+*                         REVIEWED: GuiScrollBar(), minor tweaks
+*                         REVIEWED: Functions descriptions, removed wrong return value reference
+*                         REDESIGNED: GuiColorPanel(), improved HSV <-> RGBA convertion
 *
 *       4.0 (12-Sep-2023) ADDED: GuiToggleSlider()
 *                         ADDED: GuiColorPickerHSV() and GuiColorPanelHSV()
@@ -317,9 +332,9 @@
 #define RAYGUI_H
 
 #define RAYGUI_VERSION_MAJOR 4
-#define RAYGUI_VERSION_MINOR 1
+#define RAYGUI_VERSION_MINOR 5
 #define RAYGUI_VERSION_PATCH 0
-#define RAYGUI_VERSION  "4.1-dev"
+#define RAYGUI_VERSION  "4.5-dev"
 
 #if !defined(RAYGUI_STANDALONE)
     #include "raylib.h"
@@ -617,7 +632,8 @@ typedef enum {
 typedef enum {
     ARROW_PADDING = 16,         // DropdownBox arrow separation from border and items
     DROPDOWN_ITEMS_SPACING,     // DropdownBox items separation
-    DROPDOWN_ARROW_HIDDEN       // DropdownBox arrow hidden
+    DROPDOWN_ARROW_HIDDEN,      // DropdownBox arrow hidden
+    DROPDOWN_ROLL_UP            // DropdownBox roll up flag (default rolls down)
 } GuiDropdownBoxProperty;
 
 // TextBox/TextBoxMulti/ValueBox/Spinner
@@ -977,11 +993,11 @@ typedef enum {
     ICON_WARNING                  = 220,
     ICON_HELP_BOX                 = 221,
     ICON_INFO_BOX                 = 222,
-    ICON_223                      = 223,
-    ICON_224                      = 224,
-    ICON_225                      = 225,
-    ICON_226                      = 226,
-    ICON_227                      = 227,
+    ICON_PRIORITY                 = 223,
+    ICON_LAYERS_ISO               = 224,
+    ICON_LAYERS2                  = 225,
+    ICON_MLAYERS                  = 226,
+    ICON_MAPS                     = 227,
     ICON_228                      = 228,
     ICON_229                      = 229,
     ICON_230                      = 230,
@@ -2335,12 +2351,16 @@ int GuiDropdownBox(RayRectangle bounds, const char *text, int *active, bool edit
     int itemSelected = *active;
     int itemFocused = -1;
 
+    int direction = 0; // Dropdown box open direction: down (default)
+    if (GuiGetStyle(DROPDOWNBOX, DROPDOWN_ROLL_UP) == 1) direction = 1; // Up
+
     // Get substrings items from text (items pointers, lengths and count)
     int itemCount = 0;
     const char **items = GuiTextSplit(text, ';', &itemCount, NULL);
 
     RayRectangle boundsOpen = bounds;
     boundsOpen.height = (itemCount + 1)*(bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING));
+    if (direction == 1) boundsOpen.y -= itemCount*(bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING)) + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING);
 
     RayRectangle itemBounds = bounds;
 
@@ -2367,7 +2387,8 @@ int GuiDropdownBox(RayRectangle bounds, const char *text, int *active, bool edit
             for (int i = 0; i < itemCount; i++)
             {
                 // Update item rectangle y position for next item
-                itemBounds.y += (bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING));
+                if (direction == 0) itemBounds.y += (bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING));
+                else itemBounds.y -= (bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING));
 
                 if (CheckCollisionPointRec(mousePoint, itemBounds))
                 {
@@ -2411,7 +2432,8 @@ int GuiDropdownBox(RayRectangle bounds, const char *text, int *active, bool edit
         for (int i = 0; i < itemCount; i++)
         {
             // Update item rectangle y position for next item
-            itemBounds.y += (bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING));
+            if (direction == 0) itemBounds.y += (bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING));
+            else itemBounds.y -= (bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING));
 
             if (i == itemSelected)
             {
@@ -2434,7 +2456,7 @@ int GuiDropdownBox(RayRectangle bounds, const char *text, int *active, bool edit
         GuiDrawText("v", RAYGUI_CLITERAL(RayRectangle){ bounds.x + bounds.width - GuiGetStyle(DROPDOWNBOX, ARROW_PADDING), bounds.y + bounds.height/2 - 2, 10, 10 },
             TEXT_ALIGN_CENTER, GetColor(GuiGetStyle(DROPDOWNBOX, TEXT + (state*3))));
 #else
-        GuiDrawText("#120#", RAYGUI_CLITERAL(RayRectangle){ bounds.x + bounds.width - GuiGetStyle(DROPDOWNBOX, ARROW_PADDING), bounds.y + bounds.height/2 - 6, 10, 10 },
+        GuiDrawText(direction? "#121#" : "#120#", RAYGUI_CLITERAL(RayRectangle){ bounds.x + bounds.width - GuiGetStyle(DROPDOWNBOX, ARROW_PADDING), bounds.y + bounds.height/2 - 6, 10, 10 },
             TEXT_ALIGN_CENTER, GetColor(GuiGetStyle(DROPDOWNBOX, TEXT + (state*3))));   // ICON_ARROW_DOWN_FILL
 #endif
     }
