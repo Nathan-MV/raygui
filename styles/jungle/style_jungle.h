@@ -145,7 +145,7 @@ static unsigned char jungleFontData[JUNGLE_STYLE_FONT_ATLAS_COMP_SIZE] = { 0xed,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3c, 0x90, 0xb9, 0x10, 0xfd, 0xd1, 0xff, 0xe4, 0xfa, 0xbf, 0x05 };
 
 // Font glyphs rectangles data (on atlas)
-static const Rectangle jungleFontRecs[189] = {
+static const RayRectangle jungleFontRecs[189] = {
     { 4, 4, 5 , 12 },
     { 17, 4, 2 , 7 },
     { 27, 4, 5 , 3 },
@@ -557,8 +557,8 @@ static void GuiLoadStyleJungle(void)
 
     // Copy char recs data from global fontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(Rectangle));
-    memcpy(font.recs, jungleFontRecs, font.glyphCount*sizeof(Rectangle));
+    font.recs = (RayRectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(RayRectangle));
+    memcpy(font.recs, jungleFontRecs, font.glyphCount*sizeof(RayRectangle));
 
     // Copy font char info data from global fontChars
     // NOTE: Required to avoid issues if trying to free font
@@ -569,7 +569,7 @@ static void GuiLoadStyleJungle(void)
 
     // Setup a white rectangle on the font to be used on shapes drawing,
     // it makes possible to draw shapes and text (full UI) in a single draw call
-    Rectangle fontWhiteRec = { 254, 254, 1, 1 };
+    RayRectangle fontWhiteRec = { 254, 254, 1, 1 };
     SetShapesTexture(font.texture, fontWhiteRec);
 
     //-----------------------------------------------------------------

@@ -148,7 +148,7 @@ static unsigned char candyFontData[CANDY_STYLE_FONT_ATLAS_COMP_SIZE] = { 0xed,
     0x79, 0x00, 0xf1, 0x0f, 0x7c, 0x5d, 0xfc, 0xff, 0x0d };
 
 // Font glyphs rectangles data (on atlas)
-static const Rectangle candyFontRecs[189] = {
+static const RayRectangle candyFontRecs[189] = {
     { 4, 4, 3 , 15 },
     { 15, 4, 2 , 9 },
     { 25, 4, 3 , 2 },
@@ -560,8 +560,8 @@ static void GuiLoadStyleCandy(void)
 
     // Copy char recs data from global fontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(Rectangle));
-    memcpy(font.recs, candyFontRecs, font.glyphCount*sizeof(Rectangle));
+    font.recs = (RayRectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(RayRectangle));
+    memcpy(font.recs, candyFontRecs, font.glyphCount*sizeof(RayRectangle));
 
     // Copy font char info data from global fontChars
     // NOTE: Required to avoid issues if trying to free font
@@ -572,7 +572,7 @@ static void GuiLoadStyleCandy(void)
 
     // Setup a white rectangle on the font to be used on shapes drawing,
     // it makes possible to draw shapes and text (full UI) in a single draw call
-    Rectangle fontWhiteRec = { 510, 254, 1, 1 };
+    RayRectangle fontWhiteRec = { 510, 254, 1, 1 };
     SetShapesTexture(font.texture, fontWhiteRec);
 
     //-----------------------------------------------------------------

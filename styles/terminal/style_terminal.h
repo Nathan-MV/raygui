@@ -135,7 +135,7 @@ static unsigned char terminalFontData[TERMINAL_STYLE_FONT_ATLAS_COMP_SIZE] = { 0
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf6, 0xf9, 0xf3, 0x9f, 0xfd, 0x00, 0xf2, 0x0f, 0x7c, 0x2e, 0xff, 0xff, 0x00 };
 
 // Font glyphs rectangles data (on atlas)
-static const Rectangle terminalFontRecs[189] = {
+static const RayRectangle terminalFontRecs[189] = {
     { 4, 4, 4 , 16 },
     { 16, 4, 1 , 11 },
     { 25, 4, 3 , 3 },
@@ -547,8 +547,8 @@ static void GuiLoadStyleTerminal(void)
 
     // Copy char recs data from global fontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(Rectangle));
-    memcpy(font.recs, terminalFontRecs, font.glyphCount*sizeof(Rectangle));
+    font.recs = (RayRectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(RayRectangle));
+    memcpy(font.recs, terminalFontRecs, font.glyphCount*sizeof(RayRectangle));
 
     // Copy font char info data from global fontChars
     // NOTE: Required to avoid issues if trying to free font
@@ -559,7 +559,7 @@ static void GuiLoadStyleTerminal(void)
 
     // Setup a white rectangle on the font to be used on shapes drawing,
     // it makes possible to draw shapes and text (full UI) in a single draw call
-    Rectangle fontWhiteRec = { 510, 254, 1, 1 };
+    RayRectangle fontWhiteRec = { 510, 254, 1, 1 };
     SetShapesTexture(font.texture, fontWhiteRec);
 
     //-----------------------------------------------------------------
