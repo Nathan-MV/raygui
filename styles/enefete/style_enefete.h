@@ -166,7 +166,7 @@ static unsigned char enefeteFontData[ENEFETE_STYLE_FONT_ATLAS_COMP_SIZE] = { 0xe
     0x0f };
 
 // Font glyphs rectangles data (on atlas)
-static const Rectangle enefeteFontRecs[189] = {
+static const RayRectangle enefeteFontRecs[189] = {
     { 4, 4, 4 , 16 },
     { 16, 4, 2 , 10 },
     { 26, 4, 5 , 3 },
@@ -578,8 +578,8 @@ static void GuiLoadStyleEnefete(void)
 
     // Copy char recs data from global fontRecs
     // NOTE: Required to avoid issues if trying to free font
-    font.recs = (Rectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(Rectangle));
-    memcpy(font.recs, enefeteFontRecs, font.glyphCount*sizeof(Rectangle));
+    font.recs = (RayRectangle *)RAYGUI_MALLOC(font.glyphCount*sizeof(RayRectangle));
+    memcpy(font.recs, enefeteFontRecs, font.glyphCount*sizeof(RayRectangle));
 
     // Copy font char info data from global fontChars
     // NOTE: Required to avoid issues if trying to free font
@@ -590,7 +590,7 @@ static void GuiLoadStyleEnefete(void)
 
     // Setup a white rectangle on the font to be used on shapes drawing,
     // it makes possible to draw shapes and text (full UI) in a single draw call
-    Rectangle fontWhiteRec = { 510, 254, 1, 1 };
+    RayRectangle fontWhiteRec = { 510, 254, 1, 1 };
     SetShapesTexture(font.texture, fontWhiteRec);
 
     //-----------------------------------------------------------------
