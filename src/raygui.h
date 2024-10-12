@@ -2270,6 +2270,8 @@ int GuiCheckBox(RayRectangle bounds, const char *text, bool *checked)
     }
 
     GuiDrawText(text, textBounds, (GuiGetStyle(CHECKBOX, TEXT_ALIGNMENT) == TEXT_ALIGN_RIGHT)? TEXT_ALIGN_LEFT : TEXT_ALIGN_RIGHT, GetColor(GuiGetStyle(LABEL, TEXT + (state*3))));
+
+    if (state == STATE_FOCUSED) GuiTooltip(bounds);
     //--------------------------------------------------------------------
 
     return result;
@@ -2449,6 +2451,7 @@ int GuiDropdownBox(RayRectangle bounds, const char *text, int *active, bool edit
             else GuiDrawText(items[i], GetTextBounds(DROPDOWNBOX, itemBounds), GuiGetStyle(DROPDOWNBOX, TEXT_ALIGNMENT), GetColor(GuiGetStyle(DROPDOWNBOX, TEXT_COLOR_NORMAL)));
         }
     }
+    else if (state == STATE_FOCUSED) GuiTooltip(bounds);
 
     if (!GuiGetStyle(DROPDOWNBOX, DROPDOWN_ARROW_HIDDEN))
     {
@@ -2885,6 +2888,8 @@ int GuiSpinner(RayRectangle bounds, const char *text, int *value, int minValue, 
 
     // Draw text label if provided
     GuiDrawText(text, textBounds, (GuiGetStyle(SPINNER, TEXT_ALIGNMENT) == TEXT_ALIGN_RIGHT)? TEXT_ALIGN_LEFT : TEXT_ALIGN_RIGHT, GetColor(GuiGetStyle(LABEL, TEXT + (state*3))));
+
+    if (state == STATE_FOCUSED && !editMode) GuiTooltip(bounds);
     //--------------------------------------------------------------------
 
     *value = tempValue;
@@ -2998,7 +3003,8 @@ int GuiValueBox(RayRectangle bounds, const char *text, int *value, int minValue,
         // NOTE: ValueBox internal text is always centered
         RayRectangle cursor = { bounds.x + GetTextWidth(textValue)/2 + bounds.width/2 + 1, bounds.y + 2*GuiGetStyle(VALUEBOX, BORDER_WIDTH), 4, bounds.height - 4*GuiGetStyle(VALUEBOX, BORDER_WIDTH) };
         GuiDrawRectangle(cursor, 0, BLANK, GetColor(GuiGetStyle(VALUEBOX, BORDER_COLOR_PRESSED)));
-    }
+    } 
+    else if (state == STATE_FOCUSED) GuiTooltip(bounds);
 
     // Draw text label if provided
     GuiDrawText(text, textBounds, (GuiGetStyle(VALUEBOX, TEXT_ALIGNMENT) == TEXT_ALIGN_RIGHT)? TEXT_ALIGN_LEFT : TEXT_ALIGN_RIGHT, GetColor(GuiGetStyle(LABEL, TEXT + (state*3))));
@@ -3108,6 +3114,7 @@ int GuiValueBoxFloat(RayRectangle bounds, const char *text, char *textValue, flo
                             bounds.height - 4*GuiGetStyle(VALUEBOX, BORDER_WIDTH)};
         GuiDrawRectangle(cursor, 0, BLANK, GetColor(GuiGetStyle(VALUEBOX, BORDER_COLOR_PRESSED)));
     }
+    else if (state == STATE_FOCUSED) GuiTooltip(bounds);
 
     // Draw text label if provided
     GuiDrawText(text, textBounds,
