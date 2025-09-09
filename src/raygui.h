@@ -3575,7 +3575,6 @@ int GuiListView(RayRectangle bounds, const char *text, int *scrollIndex, int *ac
     return result;
 }
 
-// List View control with extended parameters
 int GuiListViewEx(RayRectangle bounds, const char **text, int count, int *scrollIndex, int *active, int *focus)
 {
     int result = 0;
@@ -3584,26 +3583,37 @@ int GuiListViewEx(RayRectangle bounds, const char **text, int count, int *scroll
     int itemFocused = (focus == NULL)? -1 : *focus;
     int itemSelected = (active == NULL)? -1 : *active;
 
+    // Cache frequently used style values (avoid many GuiGetStyle calls)
+    const int borderWidth     = GuiGetStyle(DEFAULT, BORDER_WIDTH);
+    const int itemHeight      = GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT);
+    const int itemSpacing     = GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
+    const int scrollBarWidth  = GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH);
+    const bool drawBorders    = GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_NORMAL);
+
+    const int baseTextAlign   = GuiGetStyle(LISTVIEW, TEXT_ALIGNMENT);
+
     // Check if we need a scroll bar
-    bool useScrollBar = false;
-    if ((GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING))*count > bounds.height) useScrollBar = true;
+    bool useScrollBar = (itemHeight + itemSpacing)*count > bounds.height;
 
     // Define base item rectangle [0]
-    RayRectangle itemBounds = { 0 };
-    itemBounds.x = bounds.x + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING);
-    itemBounds.y = bounds.y + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING) + GuiGetStyle(DEFAULT, BORDER_WIDTH);
-    itemBounds.width = bounds.width - 2*GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING) - GuiGetStyle(DEFAULT, BORDER_WIDTH);
-    itemBounds.height = (float)GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT);
-    if (useScrollBar) itemBounds.width -= GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH);
+    RayRectangle itemBounds = {
+        bounds.x + itemSpacing,
+        bounds.y + itemSpacing + borderWidth,
+        bounds.width - 2*itemSpacing - borderWidth,
+        (float)itemHeight
+    };
+    if (useScrollBar) itemBounds.width -= scrollBarWidth;
 
-    // Get items on the list
-    int visibleItems = (int)bounds.height/(GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING));
+    // Compute visible items
+    int visibleItems = (int)(bounds.height / (itemHeight + itemSpacing));
     if (visibleItems > count) visibleItems = count;
 
     int startIndex = (scrollIndex == NULL)? 0 : *scrollIndex;
-    if ((startIndex < 0) || (startIndex > (count - visibleItems))) startIndex = 0;
+    if (startIndex < 0) startIndex = 0;
+    else if (startIndex > (count - visibleItems)) startIndex = count - visibleItems;
     int endIndex = startIndex + visibleItems;
 
+    //--------------------------------------------------------------------
     // Update control
     //--------------------------------------------------------------------
     if ((state != STATE_DISABLED) && !guiLocked && !guiControlExclusiveMode)
@@ -3615,22 +3625,26 @@ int GuiListViewEx(RayRectangle bounds, const char **text, int count, int *scroll
         {
             state = STATE_FOCUSED;
 
+            const float itemStepY = (float)(itemHeight + itemSpacing);
+            float itemY = itemBounds.y;
+
             // Check focused and selected item
             for (int i = 0; i < visibleItems; i++)
             {
-                if (CheckCollisionPointRec(mousePoint, itemBounds))
+                RayRectangle testBounds = { itemBounds.x, itemY, itemBounds.width, itemBounds.height };
+
+                if (CheckCollisionPointRec(mousePoint, testBounds))
                 {
                     itemFocused = startIndex + i;
                     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
                     {
-                        if (itemSelected == (startIndex + i)) itemSelected = -1;
-                        else itemSelected = startIndex + i;
+                        if (itemSelected == itemFocused) itemSelected = -1;
+                        else itemSelected = itemFocused;
                     }
                     break;
                 }
-
                 // Update item rectangle y position for next item
-                itemBounds.y += (GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING));
+                itemY += itemStepY;
             }
 
             if (useScrollBar)
@@ -3646,58 +3660,79 @@ int GuiListViewEx(RayRectangle bounds, const char **text, int count, int *scroll
             }
         }
         else itemFocused = -1;
-
-        // Reset item rectangle y to [0]
-        itemBounds.y = bounds.y + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING) + GuiGetStyle(DEFAULT, BORDER_WIDTH);
     }
     //--------------------------------------------------------------------
 
+    //--------------------------------------------------------------------
     // Draw control
     //--------------------------------------------------------------------
-    GuiDrawRectangle(bounds, GuiGetStyle(LISTVIEW, BORDER_WIDTH), GetColor(GuiGetStyle(LISTVIEW, BORDER + state*3)), GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));     // Draw background
+    GuiDrawRectangle(bounds, borderWidth, 
+        GetColor(GuiGetStyle(LISTVIEW, BORDER + state*3)), 
+        GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+
+    const float itemStepY = (float)(itemHeight + itemSpacing);
+    float itemY = itemBounds.y;
 
     // Draw visible items
-    for (int i = 0; ((i < visibleItems) && (text != NULL)); i++)
+    for (int i = 0; (i < visibleItems) && (text != NULL); i++)
     {
-        if (GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_NORMAL)) GuiDrawRectangle(itemBounds, GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_WIDTH), GetColor(GuiGetStyle(LISTVIEW, BORDER_COLOR_NORMAL)), BLANK);
+        RayRectangle drawBounds = { itemBounds.x, itemY, itemBounds.width, itemBounds.height };
+
+        if (drawBorders) 
+            GuiDrawRectangle(drawBounds, GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_WIDTH), 
+                             GetColor(GuiGetStyle(LISTVIEW, BORDER_COLOR_NORMAL)), BLANK);
+
+        int itemIndex = startIndex + i;
 
         if (state == STATE_DISABLED)
         {
-            if ((startIndex + i) == itemSelected) GuiDrawRectangle(itemBounds, GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_WIDTH), GetColor(GuiGetStyle(LISTVIEW, BORDER_COLOR_DISABLED)), GetColor(GuiGetStyle(LISTVIEW, BASE_COLOR_DISABLED)));
+            if (itemIndex == itemSelected)
+                GuiDrawRectangle(drawBounds, GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_WIDTH), 
+                                 GetColor(GuiGetStyle(LISTVIEW, BORDER_COLOR_DISABLED)), 
+                                 GetColor(GuiGetStyle(LISTVIEW, BASE_COLOR_DISABLED)));
 
-            GuiDrawText(text[startIndex + i], GetTextBounds(DEFAULT, itemBounds), GuiGetStyle(LISTVIEW, TEXT_ALIGNMENT), GetColor(GuiGetStyle(LISTVIEW, TEXT_COLOR_DISABLED)));
+            GuiDrawText(text[itemIndex], GetTextBounds(DEFAULT, drawBounds), baseTextAlign, 
+                        GetColor(GuiGetStyle(LISTVIEW, TEXT_COLOR_DISABLED)));
         }
         else
         {
-            if (((startIndex + i) == itemSelected) && (active != NULL))
+            if ((itemIndex == itemSelected) && (active != NULL))
             {
                 // Draw item selected
-                GuiDrawRectangle(itemBounds, GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_WIDTH), GetColor(GuiGetStyle(LISTVIEW, BORDER_COLOR_PRESSED)), GetColor(GuiGetStyle(LISTVIEW, BASE_COLOR_PRESSED)));
-                GuiDrawText(text[startIndex + i], GetTextBounds(DEFAULT, itemBounds), GuiGetStyle(LISTVIEW, TEXT_ALIGNMENT), GetColor(GuiGetStyle(LISTVIEW, TEXT_COLOR_PRESSED)));
+                GuiDrawRectangle(drawBounds, GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_WIDTH), 
+                                 GetColor(GuiGetStyle(LISTVIEW, BORDER_COLOR_PRESSED)), 
+                                 GetColor(GuiGetStyle(LISTVIEW, BASE_COLOR_PRESSED)));
+
+                GuiDrawText(text[itemIndex], GetTextBounds(DEFAULT, drawBounds), baseTextAlign, 
+                            GetColor(GuiGetStyle(LISTVIEW, TEXT_COLOR_PRESSED)));
             }
-            else if (((startIndex + i) == itemFocused)) // && (focus != NULL))  // NOTE: We want items focused, despite not returned!
+            else if (itemIndex == itemFocused)
             {
                 // Draw item focused
-                GuiDrawRectangle(itemBounds, GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_WIDTH), GetColor(GuiGetStyle(LISTVIEW, BORDER_COLOR_FOCUSED)), GetColor(GuiGetStyle(LISTVIEW, BASE_COLOR_FOCUSED)));
-                GuiDrawText(text[startIndex + i], GetTextBounds(DEFAULT, itemBounds), GuiGetStyle(LISTVIEW, TEXT_ALIGNMENT), GetColor(GuiGetStyle(LISTVIEW, TEXT_COLOR_FOCUSED)));
+                GuiDrawRectangle(drawBounds, GuiGetStyle(LISTVIEW, LIST_ITEMS_BORDER_WIDTH), 
+                                 GetColor(GuiGetStyle(LISTVIEW, BORDER_COLOR_FOCUSED)), 
+                                 GetColor(GuiGetStyle(LISTVIEW, BASE_COLOR_FOCUSED)));
+
+                GuiDrawText(text[itemIndex], GetTextBounds(DEFAULT, drawBounds), baseTextAlign, 
+                            GetColor(GuiGetStyle(LISTVIEW, TEXT_COLOR_FOCUSED)));
             }
             else
             {
                 // Draw item normal (no rectangle)
-                GuiDrawText(text[startIndex + i], GetTextBounds(DEFAULT, itemBounds), GuiGetStyle(LISTVIEW, TEXT_ALIGNMENT), GetColor(GuiGetStyle(LISTVIEW, TEXT_COLOR_NORMAL)));
+                GuiDrawText(text[itemIndex], GetTextBounds(DEFAULT, drawBounds), baseTextAlign, 
+                            GetColor(GuiGetStyle(LISTVIEW, TEXT_COLOR_NORMAL)));
             }
         }
 
-        // Update item rectangle y position for next item
-        itemBounds.y += (GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_SPACING));
+        itemY += itemStepY;
     }
 
     if (useScrollBar)
     {
         RayRectangle scrollBarBounds = {
-            bounds.x + bounds.width - GuiGetStyle(LISTVIEW, BORDER_WIDTH) - GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH),
-            bounds.y + GuiGetStyle(LISTVIEW, BORDER_WIDTH), (float)GuiGetStyle(LISTVIEW, SCROLLBAR_WIDTH),
-            bounds.height - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH)
+            bounds.x + bounds.width - borderWidth - scrollBarWidth,
+            bounds.y + borderWidth, (float)scrollBarWidth,
+            bounds.height - 2*borderWidth
         };
 
         // Calculate percentage of visible items and apply same percentage to scrollbar
